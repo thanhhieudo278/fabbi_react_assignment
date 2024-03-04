@@ -1,120 +1,175 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import './App.scss';
-import {Box, Button, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import {Alert, AlertTitle, Box, Button, IconButton, Step, StepLabel, Stepper, Typography} from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
+import StepOneComponent from "./page/stepOneComponent";
+import StepTwoComponent from "./page/stepTwoComponent";
+import StepThreeComponent from "./page/stepThreeComponent";
+import ReviewComponent from "./page/reviewComponent";
+import {dispatch, useAppSelector} from "./store/store";
+import {fetchDishesListApi, updateReview} from "./store/feature/reviewSlice";
+import {useForm} from "react-hook-form";
+import {v4 as uuidv4} from "uuid";
 
-const steps = ["Step1", "Step2", "Step3", "Step4"]
+const steps = ["Step1", "Step2", "Step3", "Review"]
 
 const App = () => {
+    const reviewData = useAppSelector((state) => state.reviewSlice);
     const [activeStep, setActiveStep] = React.useState(0);
-    const [skipped, setSkipped] = React.useState(new Set<number>());
-
-    const isStepOptional = (step: number) => {
-        return step === 1;
-    };
-
-    const isStepSkipped = (step: number) => {
-        return skipped.has(step);
-    };
+    const [alert, setAlert] = useState(false);
 
     const handleNext = () => {
-        let newSkipped = skipped;
-        if (isStepSkipped(activeStep)) {
-            newSkipped = new Set(newSkipped.values());
-            newSkipped.delete(activeStep);
-        }
-
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped(newSkipped);
+        if (activeStep === steps.length) {
+            dispatch(
+                updateReview(
+                    {
+                        meal: '',
+                        noOfPeople: 1,
+                        restaurant: '',
+                        dishesOrders: [
+                            {
+                                dish: '',
+                                noOfSer: 1,
+                                id: uuidv4()
+                            }
+                        ]
+                    }))
+            setActiveStep(0);
+        } else if (activeStep === steps.length - 1) {
+            setActiveStep((prevActiveStep) => prevActiveStep + 1)
+        } else setActiveStep((prevActiveStep) => prevActiveStep + 1);
     };
 
     const handleBack = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
-    const handleSkip = () => {
-        if (!isStepOptional(activeStep)) {
-            // You probably want to guard against something like this,
-            // it should never occur unless someone's actively trying to break something.
-            throw new Error("You can't skip a step that isn't optional.");
-        }
-
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped((prevSkipped) => {
-            const newSkipped = new Set(prevSkipped.values());
-            newSkipped.add(activeStep);
-            return newSkipped;
-        });
-    };
-
-    const handleReset = () => {
-        setActiveStep(0);
-    };
+    useEffect(() => {
+        fetchDishesListApi()
+    }, [])
 
 
-  return (
-    <div className="App">
-      <header className="App-header">
-          <Box sx={{ width: '100%' }}>
-              <Stepper activeStep={activeStep}>
-                  {steps.map((label, index) => {
-                      const stepProps: { completed?: boolean } = {};
-                      const labelProps: {
-                          optional?: React.ReactNode;
-                      } = {};
-                      if (isStepOptional(index)) {
-                          labelProps.optional = (
-                              <Typography variant="caption">Optional</Typography>
-                          );
-                      }
-                      if (isStepSkipped(index)) {
-                          stepProps.completed = false;
-                      }
-                      return (
-                          <Step key={label} {...stepProps}>
-                              <StepLabel {...labelProps}>{label}</StepLabel>
-                          </Step>
-                      );
-                  })}
-              </Stepper>
-              {activeStep === steps.length ? (
-                  <React.Fragment>
-                      <Typography sx={{ mt: 2, mb: 1 }}>
-                          All steps completed - you&apos;re finished
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                          <Box sx={{ flex: '1 1 auto' }} />
-                          <Button onClick={handleReset}>Reset</Button>
-                      </Box>
-                  </React.Fragment>
-              ) : (
-                  <React.Fragment>
-                      <Typography sx={{ mt: 2, mb: 1 }}>Step {activeStep + 1}</Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                          <Button
-                              color="inherit"
-                              disabled={activeStep === 0}
-                              onClick={handleBack}
-                              sx={{ mr: 1 }}
-                          >
-                              Back
-                          </Button>
-                          <Box sx={{ flex: '1 1 auto' }} />
-                          {isStepOptional(activeStep) && (
-                              <Button color="inherit" onClick={handleSkip} sx={{ mr: 1 }}>
-                                  Skip
-                              </Button>
-                          )}
-                          {/* eslint-disable-next-line react/jsx-no-undef */}
-                          <Button onClick={handleNext}>
-                              {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-                          </Button>
-                      </Box>
-                  </React.Fragment>
-              )}
-          </Box>
-      </header>
-    </div>
-  );
+    const {
+        register,
+        handleSubmit,
+        formState: {errors},
+    } = useForm({mode: "onSubmit"});
+
+
+    const onValid = () => {
+        if (activeStep === 2){
+            if(Number(reviewData.review.noOfPeople) >= Number(reviewData.review?.dishesOrders?.map(i => i.noOfSer)
+                    .reduce((sum, e) => (sum && e) ? sum + e : sum))){
+                handleNext()
+            }else{
+                setAlert(true)
+            }
+        }else handleNext()
+
+    }
+
+
+    return (
+        <div className="App">
+            {alert && <Alert
+                variant={"filled"}
+                severity="error"
+                color={"error"}
+                action={
+                    <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={() => {
+                            setAlert(false);
+                        }}
+                    >
+                        <CloseIcon fontSize="inherit"/>
+                    </IconButton>
+                }
+                sx={{m:2, position:"absolute", bottom: 0, right: 0, width: "500px", zIndex: 10000000,}}
+            >
+                <AlertTitle>Error</AlertTitle>
+                The total number of dishes should be greater or equal to the number of people selected and a maximum of 10 is allowed
+            </Alert>}
+            <header className="App-header">
+                <Box sx={{width: '50%', marginTop: '10%'}}>
+                    <Box sx={{width: '60%', marginBottom: '20%'}}>
+                        <Stepper activeStep={activeStep}>
+                            {steps.map((label, index) => {
+                                const stepProps: { completed?: boolean } = {};
+                                const labelProps: {
+                                    optional?: React.ReactNode;
+                                } = {};
+                                return (
+                                    <Step key={label} {...stepProps}>
+                                        <StepLabel {...labelProps}>{label}</StepLabel>
+                                    </Step>
+                                );
+                            })}
+                        </Stepper>
+                    </Box>
+                    <form onSubmit={handleSubmit(onValid)}>
+                        <Box>
+                            {activeStep === steps.length &&
+                                <React.Fragment>
+                                    <Box display={"flex"} justifyContent={"center"}>
+                                        <Typography sx={{mt: 2, mb: 1}}>
+                                            All steps completed - you&apos;re finished
+                                        </Typography>
+                                    </Box>
+                                </React.Fragment>
+                            }
+                            {activeStep === 0 && (
+                                <React.Fragment>
+                                    <StepOneComponent register={register} reviewDataPass={reviewData}
+                                                      errors={errors}></StepOneComponent>
+                                </React.Fragment>
+                            )}
+                            {activeStep === 1 && (
+                                <React.Fragment>
+                                    <StepTwoComponent register={register} reviewDataPass={reviewData}
+                                                      errors={errors}></StepTwoComponent>
+                                </React.Fragment>
+                            )}
+                            {activeStep === 2 && (
+                                <React.Fragment>
+                                    <StepThreeComponent register={register} reviewDataPass={reviewData}
+                                                        errors={errors}></StepThreeComponent>
+                                </React.Fragment>
+                            )}
+                            {activeStep === 3 && (
+                                <React.Fragment>
+                                    <ReviewComponent {...reviewData}></ReviewComponent>
+                                </React.Fragment>
+                            )}
+                        </Box>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            pt: "20%",
+                            justifyContent: 'space-between'
+                        }}>
+                            <Button
+                                color="inherit"
+                                disabled={activeStep === 0}
+                                onClick={handleBack}
+                                sx={{mr: 1}}
+                            >
+                                Back
+                            </Button>
+
+                            <Button type={"submit"}>
+                                {
+                                    activeStep === steps.length ? 'reset' :
+                                        activeStep === steps.length - 1 ? 'Submit' : 'Next'}
+                            </Button>
+                        </Box>
+                    </form>
+                </Box>
+            </header>
+        </div>
+    );
 }
 export default App
 
