@@ -2,6 +2,7 @@
   "name": "fabbi_react_assignment",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://thanhhieudo278.github.io/fabbi_react_assignment/",
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -15,6 +16,7 @@
     "@types/node": "^16.18.83",
     "@types/react": "^18.2.58",
     "@types/react-dom": "^18.2.19",
+    "gh-pages": "^6.1.1",
     "lodash": "^4.17.21",
     "lodash.clonedeep": "^4.5.0",
     "react": "^18.2.0",
@@ -28,6 +30,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
