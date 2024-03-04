@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/fabbi_react_assignment/static/css/main.163fdc1d.css",
+    "main.js": "/fabbi_react_assignment/static/js/main.f1453557.js",
+    "static/js/702.a8c8a6ae.chunk.js": "/fabbi_react_assignment/static/js/702.a8c8a6ae.chunk.js",
+    "static/js/453.fba39d92.chunk.js": "/fabbi_react_assignment/static/js/453.fba39d92.chunk.js",
+    "index.html": "/fabbi_react_assignment/index.html",
+    "main.163fdc1d.css.map": "/fabbi_react_assignment/static/css/main.163fdc1d.css.map",
+    "main.f1453557.js.map": "/fabbi_react_assignment/static/js/main.f1453557.js.map",
+    "453.fba39d92.chunk.js.map": "/fabbi_react_assignment/static/js/453.fba39d92.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.163fdc1d.css",
+    "static/js/main.f1453557.js"
+  ]
+}
